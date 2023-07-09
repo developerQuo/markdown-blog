@@ -3,41 +3,34 @@ import fs from 'fs'
 import fm from 'front-matter'
 import { remark } from 'remark'
 import remarkHtml from 'remark-html'
-
-type Metadata = {
-  categories: string[]
-  date: string
-  description: string
-  slug: string
-  tags: string[]
-  title: string
-}
+import { Content, Metadata } from 'types/blog'
 
 export const getStaticProps: GetStaticProps<{
   metadata: Metadata | undefined
-  blog: string | undefined
+  content: Content | undefined
 }> = async ({ params }) => {
   if (!params?.title || !Array.isArray(params?.title))
-    return { props: { metadata: undefined, blog: undefined } }
+    return { props: { metadata: undefined, content: undefined } }
 
   const title = params.title[0]
   const file = fs.readFileSync(`public/__posts/${title}.md`, {
     encoding: 'utf8',
   })
   const { attributes: metadata, body } = fm<Metadata>(file)
-  const blog = await remark()
+  const content = await remark()
     .use(remarkHtml as any)
     .process(body)
+    .toString()
   return {
-    props: { metadata, blog: String(blog) },
+    props: { metadata, content },
   }
 }
 
 export default function Page({
   metadata,
-  blog,
+  content,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
-  if (!metadata || !blog)
+  if (!metadata || !content)
     return (
       <div>
         <h1>Page not found</h1>
@@ -48,7 +41,7 @@ export default function Page({
   return (
     <div>
       <h1>{metadata.title}</h1>
-      <div dangerouslySetInnerHTML={{ __html: blog }} />
+      <div dangerouslySetInnerHTML={{ __html: content }} />
     </div>
   )
 }
