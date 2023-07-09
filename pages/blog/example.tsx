@@ -2,6 +2,7 @@ import type { InferGetStaticPropsType, GetStaticProps } from 'next'
 import fs from 'fs'
 import fm from 'front-matter'
 import { remark } from 'remark'
+import remarkHtml from 'remark-html'
 
 type Metadata = {
   categories: string[]
@@ -16,11 +17,13 @@ export const getStaticProps: GetStaticProps<{
   metadata: Metadata
   blog: string
 }> = async () => {
-  const file = fs.readFileSync('public/__posts/example.md', {
+  const file = fs.readFileSync('public/__posts/nextjs.md', {
     encoding: 'utf8',
   })
   const { attributes: metadata, body } = fm<Metadata>(file)
-  const blog = await remark().process(body)
+  const blog = await remark()
+    .use(remarkHtml as any)
+    .process(body)
   return {
     props: { metadata, blog: String(blog) },
   }
@@ -32,7 +35,12 @@ export default function Page({
 }: InferGetStaticPropsType<typeof getStaticProps>) {
   console.log(metadata)
   console.log(blog)
-  return
+  return (
+    <div>
+      <h1>{metadata.title}</h1>
+      <div dangerouslySetInnerHTML={{ __html: blog }} />
+    </div>
+  )
 }
 
 // export async function getStaticPaths() {
