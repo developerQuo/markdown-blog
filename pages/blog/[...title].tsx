@@ -14,10 +14,14 @@ type Metadata = {
 }
 
 export const getStaticProps: GetStaticProps<{
-  metadata: Metadata
-  blog: string
-}> = async () => {
-  const file = fs.readFileSync('public/__posts/nextjs.md', {
+  metadata: Metadata | undefined
+  blog: string | undefined
+}> = async ({ params }) => {
+  if (!params?.title || !Array.isArray(params?.title))
+    return { props: { metadata: undefined, blog: undefined } }
+
+  const title = params.title[0]
+  const file = fs.readFileSync(`public/__posts/${title}.md`, {
     encoding: 'utf8',
   })
   const { attributes: metadata, body } = fm<Metadata>(file)
@@ -33,8 +37,14 @@ export default function Page({
   metadata,
   blog,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
-  console.log(metadata)
-  console.log(blog)
+  if (!metadata || !blog)
+    return (
+      <div>
+        <h1>Page not found</h1>
+        <p>존재하지 않는 페이지입니다.</p>
+      </div>
+    )
+
   return (
     <div>
       <h1>{metadata.title}</h1>
@@ -43,9 +53,12 @@ export default function Page({
   )
 }
 
-// export async function getStaticPaths() {
-//   return {
-//     paths: ['blog/example'],
-//     fallback: true,
-//   }
-// }
+export async function getStaticPaths() {
+  const paths = fs
+    .readdirSync('public/__posts')
+    .map(file => '/blog/' + file.replace(/\.md$/, ''))
+  return {
+    paths,
+    fallback: true,
+  }
+}
