@@ -4,23 +4,25 @@ import fm from 'front-matter'
 import { remark } from 'remark'
 import remarkHtml from 'remark-html'
 import { Content, Metadata } from 'types/blog'
+import { BLOG_DIR } from 'common/constants'
 
 export const getStaticProps: GetStaticProps<{
   metadata: Metadata | undefined
   content: Content | undefined
 }> = async ({ params }) => {
-  if (!params?.title || !Array.isArray(params?.title))
+  if (!params?.slug || !Array.isArray(params?.slug))
     return { props: { metadata: undefined, content: undefined } }
 
-  const title = params.title[0]
-  const file = fs.readFileSync(`public/__posts/${title}.md`, {
+  const slug = params.slug[0]
+  const file = fs.readFileSync(`${BLOG_DIR}/${slug}.md`, {
     encoding: 'utf8',
   })
   const { attributes: metadata, body } = fm<Metadata>(file)
-  const content = await remark()
-    .use(remarkHtml as any)
-    .process(body)
-    .toString()
+  const content = String(
+    await remark()
+      .use(remarkHtml as any)
+      .process(body),
+  )
   return {
     props: { metadata, content },
   }
@@ -48,7 +50,7 @@ export default function Page({
 
 export async function getStaticPaths() {
   const paths = fs
-    .readdirSync('public/__posts')
+    .readdirSync(BLOG_DIR)
     .map(file => '/blog/' + file.replace(/\.md$/, ''))
   return {
     paths,

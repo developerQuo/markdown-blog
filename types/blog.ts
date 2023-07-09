@@ -7,6 +7,6 @@ export type Metadata = {
   title: string
 }
 
-export type BlogList = Pick<Metadata, 'date' | 'description' | 'title'>
+export type BlogList = Pick<Metadata, 'date' | 'description' | 'title' | 'slug'>
 
 export type Content = string
